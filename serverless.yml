@@ -21,6 +21,7 @@ provider:
 
 # you can define service wide environment variables here
   environment:
+    MAX_IPS_TO_SCAN_PER_INSTANCE: 25600
     NOTIFICATION_SNS_TOPIC:
       Ref: NotificationSNSTopic
 
@@ -33,7 +34,7 @@ package:
 
 functions:
   find:
-    handler: handler.find
+    handler: jobCreator.createJob
     timeout: 120
     events:
       - http: 

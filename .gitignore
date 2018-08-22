@@ -9,3 +9,5 @@ jspm_packages
 .idea
 *.iml
 .vscode
+.nyc_output
+coverage
