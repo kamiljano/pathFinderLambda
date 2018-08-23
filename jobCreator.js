@@ -3,22 +3,7 @@
 const distributionService = require('./lib/distribution/distributionService');
 const {LambdaError} = require('./lib/errors/errors');
 
-const splitJob = (event, b) => {
-  console.log({
-    txId: event.requestContext.requestId,
-    message: `Splitting the search request from ${b.from} to ${b.to} into multiple lambda instances`
-  });
-
-  return distributionService.splitJob(event.requestContext.requestId, b);
-};
-
 const processErrorResponse = ex => {
-  console.error(JSON.stringify({
-    txId: event.requestContext.requestId,
-    message: `Lambda failed after ${(new Date().getTime() - start)/1000} seconds`,
-    error: ex.stack
-  }));
-
   if (ex instanceof LambdaError) {
     return {
       statusCode: ex.code,
@@ -46,16 +31,25 @@ module.exports.createJob = async event => {
       message: `Received a new request for search from ${b.from} to ${b.to} with path ${b.path} and regex ${b.regex}`
     }));
 
-    await splitJob(event, b);
+    const numberOfInstances = await distributionService.splitJob(event.requestContext.requestId, b);
 
+    console.info(JSON.stringify({
+      txId: event.requestContext.requestId,
+      message: `Request processed successfully within ${(new Date().getTime() - start)/1000} missiceconds`
+    }));
     return {
       statusCode: 202,
       body: JSON.stringify({
-        message: `The request has been split into multiple lambda instances for optimization. Listen for the result on the SNS topic`
+        message: `The request has been split into ${numberOfInstances} jobs for optimization. Listen for the result on the SNS topic`
       }),
     };
 
   } catch (ex) {
-    return processErrorResponse(ex);
+    console.error(JSON.stringify({
+      txId: event.requestContext.requestId,
+      message: `Lambda failed after ${(new Date().getTime() - start)/1000} seconds`,
+      error: ex.stack
+    }));
+    return processErrorResponse(start, event, ex);
   }
 };

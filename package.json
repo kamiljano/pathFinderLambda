@@ -4,7 +4,8 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "mocha": "nyc --reporter cobertura --reporter html --reporter text  mocha --timeout 5000 --recursivel",
+    "test": "npm run mocha"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +18,8 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^12.0.2",
     "rewire": "^4.0.1",
     "serverless": "^1.30.1",
     "sinon": "^6.1.5",
