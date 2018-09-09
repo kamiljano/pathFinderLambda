@@ -14,7 +14,12 @@ provider:
       Action:
         - "sns:Publish"
       Resource:
-        Ref: NotificationSNSTopic
+         - Ref: NotificationSNSTopic
+    - Effect: "Allow"
+      Action:
+      - "lambda:InvokeFunction"
+      Resource:
+        - "arn:aws:lambda:eu-west-1:630201600234:function:pathFinder-dev-createJobs"
     - Effect: "Allow"
       Action:
         - "sqs:sendMessageBatch"
@@ -24,8 +29,6 @@ provider:
 # you can define service wide environment variables here
   environment:
     MAX_IPS_TO_SCAN_PER_INSTANCE: 25600
-    NOTIFICATION_SNS_TOPIC:
-      Ref: NotificationSNSTopic
 
 package:
   include:
@@ -37,12 +40,29 @@ package:
     - lib/**
 
 functions:
-  find:
+  createJobs:
     handler: jobCreator.createJob
-    timeout: 120
+    timeout: 300
     environment:
       JOB_QUEUE: 
         Ref: JobQueue
+
+  jobExecutor:
+    handler: jobExecutor.execute
+    timeout: 300
+    memorySize: 512
+    environment:
+      NOTIFICATION_SNS_TOPIC:
+        Ref: NotificationSNSTopic
+    events:
+      - sqs:
+          batchSize: 1
+          arn: "arn:aws:sqs:eu-west-1:630201600234:dev-http-path-search-jobs" //TODO: remove
+  find:
+    handler: gateway.find
+    timeout: 10
+    environment:
+      JOB_CREATION_LAMBDA: "${self:service}-${self:provider.stage}-createJobs"
     events:
       - http: 
           path: /find
@@ -66,7 +86,8 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         MessageRetentionPeriod: 1209600
-        QueueName: ${self:provider.stage}-job-queue
+        QueueName: ${self:provider.stage}-http-path-search-jobs
+        VisibilityTimeout: 300
     JobQueuePolicy:
       Type: AWS::SQS::QueuePolicy
       Properties: 

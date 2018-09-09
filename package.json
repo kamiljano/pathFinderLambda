@@ -4,7 +4,7 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "mocha": "nyc --reporter cobertura --reporter html --reporter text  mocha --timeout 5000 --recursivel",
+    "mocha": "nyc --reporter cobertura --reporter html --reporter text  mocha --timeout 5000 --recursive",
     "test": "npm run mocha"
   },
   "author": "",
