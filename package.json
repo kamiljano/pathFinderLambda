@@ -4,19 +4,26 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "send-coverage": "cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js",
+    "mocha": "nyc --reporter cobertura --reporter html --reporter text  mocha --timeout 5000 --recursive",
+    "test": "npm run mocha"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.296.0",
+    "lodash": "^4.17.10",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
+    "mocha-junit-reporter": "^1.18.0",
+    "nyc": "^12.0.2",
+    "rewire": "^4.0.1",
     "serverless": "^1.30.1",
+    "sinon": "^6.1.5",
     "sinon-chai": "^3.2.0"
   }
 }

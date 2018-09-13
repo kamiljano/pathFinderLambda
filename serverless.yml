@@ -6,10 +6,7 @@ provider:
   region: eu-west-1
   memorySize: 256
   versionFunctions: false
-
-# you can overwrite defaults here
-#  stage: dev
-#  region: us-east-1
+  stage: dev
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
@@ -17,24 +14,55 @@ provider:
       Action:
         - "sns:Publish"
       Resource:
-        Ref: NotificationSNSTopic
+         - Ref: NotificationSNSTopic
+    - Effect: "Allow"
+      Action:
+      - "lambda:InvokeFunction"
+      Resource:
+        - "arn:aws:lambda:eu-west-1:630201600234:function:pathFinder-dev-createJobs"
+    - Effect: "Allow"
+      Action:
+        - "sqs:sendMessageBatch"
+      Resource:
+        Fn::GetAtt: [ JobQueue, Arn ]
 
 # you can define service wide environment variables here
   environment:
-    NOTIFICATION_SNS_TOPIC:
-      Ref: NotificationSNSTopic
+    MAX_IPS_TO_SCAN_PER_INSTANCE: 25600
 
 package:
   include:
     - package.json
     - package-lock.json
-    - handler.js
+    - jobCreator.js
+    - jobDistributor.js
+    - jobExecutor.js
     - lib/**
 
 functions:
+  createJobs:
+    handler: jobCreator.createJob
+    timeout: 300
+    environment:
+      JOB_QUEUE: 
+        Ref: JobQueue
+
+  jobExecutor:
+    handler: jobExecutor.execute
+    timeout: 300
+    memorySize: 512
+    environment:
+      NOTIFICATION_SNS_TOPIC:
+        Ref: NotificationSNSTopic
+    events:
+      - sqs:
+          batchSize: 1
+          arn: "arn:aws:sqs:eu-west-1:630201600234:dev-http-path-search-jobs" //TODO: remove
   find:
-    handler: handler.find
-    timeout: 120
+    handler: gateway.find
+    timeout: 10
+    environment:
+      JOB_CREATION_LAMBDA: "${self:service}-${self:provider.stage}-createJobs"
     events:
       - http: 
           path: /find
@@ -46,40 +74,6 @@ functions:
                 from: true
                 to: true
                 regex: false
-                
-
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
-#    events:
-#      - http:
-#          path: users/create
-#          method: get
-#      - s3: ${env:BUCKET}
-#      - schedule: rate(10 minutes)
-#      - sns: greeter-topic
-#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
-#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
-#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
-#      - iot:
-#          sql: "SELECT * FROM 'some_topic'"
-#      - cloudwatchEvent:
-#          event:
-#            source:
-#              - "aws.ec2"
-#            detail-type:
-#              - "EC2 Instance State-change Notification"
-#            detail:
-#              state:
-#                - pending
-#      - cloudwatchLog: '/aws/lambda/hello'
-#      - cognitoUserPool:
-#          pool: MyUserPool
-#          trigger: PreSignUp
-
-#    Define function environment variables here
-#    environment:
-#      variable2: value2
 
 # you can add CloudFormation resource templates here
 resources:
@@ -88,8 +82,34 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: matching-path-found
+    JobQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        MessageRetentionPeriod: 1209600
+        QueueName: ${self:provider.stage}-http-path-search-jobs
+        VisibilityTimeout: 300
+    JobQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties: 
+        PolicyDocument: 
+          Id: JobQueuePolicy
+          Statement:
+            Effect: Allow
+            Principal: "*"
+            Action: 
+              - "sqs:SendMessage"
+              - "sqs:deleteMessage"
+              - "sqs:getQueueUrl"
+              - "sqs:receiveMessage"
+            Resource: "*"
+        Queues:
+          - Ref: JobQueue
   Outputs:
     NotificationSNSTopic:
       Description: "SNS topic that the events will be published to, once a matching response is found"
       Value:
         Ref: NotificationSNSTopic
+    JobQueue:
+      Description: "SQS queue that contains all the search jobs to be done"
+      Value:
+        Ref: JobQueue
