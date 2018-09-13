@@ -1,3 +1,7 @@
+# Notice
+
+*The work is still ongoing in separate branches. The current implementation is not scalable. I'm still working on splitting the work into multiple concurrent executions*
+
 # About
 
 An AWS lambda responsible for scanning the entire internet for a specified HTTP path.
