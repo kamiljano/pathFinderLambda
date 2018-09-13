@@ -1,6 +1,12 @@
 # Notice
 
-*The work is still ongoing in separate branches. The current implementation is not scalable. I'm still working on splitting the work into multiple concurrent executions*
+The work on this project is currently ongoing.
+The next steps to do:
+
+* validate the HTTP request
+* job creator does not finish within the time limit for all IPs and currently
+requires sending several requests to cover the whole thing -> run several in parallel
+* cover by more tests and publish the test coverage
 
 [![Build Status](https://travis-ci.org/kamiljano/pathFinderLambda.svg?branch=master)](https://travis-ci.org/kamiljano/pathFinderLambda)
 

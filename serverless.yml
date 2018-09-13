@@ -50,7 +50,6 @@ functions:
   jobExecutor:
     handler: jobExecutor.execute
     timeout: 300
-    memorySize: 512
     environment:
       NOTIFICATION_SNS_TOPIC:
         Ref: NotificationSNSTopic
