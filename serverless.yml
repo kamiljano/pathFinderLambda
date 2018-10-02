@@ -36,9 +36,8 @@ package:
   include:
     - package.json
     - package-lock.json
-    - jobCreator.js
-    - jobDistributor.js
     - jobExecutor.js
+    - gateway.js
     - lib/**
 
 functions:
