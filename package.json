@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.296.0",
+    "joi": "^13.7.0",
     "lodash": "^4.17.10",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"

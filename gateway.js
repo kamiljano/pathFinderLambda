@@ -2,6 +2,15 @@
 
 const {LambdaError} = require('./lib/errors/errors');
 const {BufferedJobPublisher} = require('./lib/distribution/bufferedJobPublisher');
+const Joi = require('joi');
+
+const IP_REGEX = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+const BODY_SCHEMA = Joi.object().keys({
+  from: Joi.string().regex(IP_REGEX).required(),
+  to: Joi.string().regex(IP_REGEX).required(),
+  regex: Joi.string().max(100),
+  path: Joi.string().regex(/^[\w\-!@#\$\%\^\&\*\.?=\|\,<>\/]+$/).required()
+});
 
 const processErrorResponse = ex => {
   if (ex instanceof LambdaError) {
@@ -21,10 +30,29 @@ const processErrorResponse = ex => {
   };
 };
 
+const processValidationError = (b, txId, error) => {
+  console.info(JSON.stringify({
+    txId,
+    message: 'The request is not valid',
+    originalRequest: b,
+    error
+  }));
+  return {
+    statusCode: 400,
+    body: JSON.stringify({
+      message: 'The request has been accepted for processing'
+    }),
+  }
+};
+
 module.exports.find = async event => {
-  // TODO: validate request parameters (body schema validation, making sure that 'from' is lower or equal to 'to')
   const start = new Date().getTime();
   const b = JSON.parse(event.body);
+  const validationResult = Joi.validate(b, BODY_SCHEMA);
+  if (validationResult.error) {
+    return processValidationError(b, event.requestContext.requestId, validationResult.error);
+  }
+
   try {
     console.info(JSON.stringify({
       txId: event.requestContext.requestId,
