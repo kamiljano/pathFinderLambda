@@ -2,6 +2,8 @@
 
 const searchService = require('./lib/search/searchService');
 const notificationService = require('./lib/notification/notificationService');
+const distributionService = require('./lib/distribution/distributionService');
+const {IP} = require('./lib/search/ip');
 
 const notify = (result, q) => {
   const arr = [];
@@ -11,28 +13,52 @@ const notify = (result, q) => {
   return Promise.all(arr);
 };
 
+const executeJob = async request => {
+  console.log(JSON.stringify({
+    txId: request.txId,
+    message: `Starting the search from ${request.from} to ${request.to}`
+  }));
+
+  const result = await searchService.findPath(request.from, request.to, request.path, request.regex);
+
+  for (let url of result) {
+    console.log(JSON.stringify({
+      txId: request.txId,
+      message: `Found a match for URL ${url}`
+    }));
+  }
+
+  await notify(result, request);
+};
+
+const splitJob = async request => {
+  const numberOfInstances = await distributionService.splitJob(request.txId, request);
+
+  console.info(JSON.stringify({
+    txId: request.txId,
+    message: `The request has been split into ${numberOfInstances} jobs for optimization. Listen for the result on the SNS topic`
+  }));
+};
+
+const requiresSplitting = request => {
+  const from = new IP(request.from);
+  const to = new IP(request.to);
+  return to.diff(from) > process.env.MAX_IPS_TO_SCAN_PER_INSTANCE;
+};
+
 module.exports.execute = async event => {
 
   const request = JSON.parse(event.Records[0].body);
 
   const start = new Date().getTime();
 
-  console.log(JSON.stringify({
-    txId: request.txId,
-    message: `Starting the search from ${request.from} to ${request.to}`
-  }));
-
   try {
-    const result = await searchService.findPath(request.from, request.to, request.path, request.regex);
 
-    for (let url in result) {
-      console.log(JSON.stringify({
-        txId: request.txId,
-        message: `Found a match for URL ${url}`
-      }));
+    if (requiresSplitting(request)) {
+      await splitJob(request);
+    } else {
+      await executeJob(request);
     }
-
-    await notify(result, request);
 
     console.log(JSON.stringify({
       txId: request.txId,

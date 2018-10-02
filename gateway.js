@@ -1,7 +1,7 @@
 'use strict';
 
-const AWS = require('aws-sdk');
 const {LambdaError} = require('./lib/errors/errors');
+const {BufferedJobPublisher} = require('./lib/distribution/bufferedJobPublisher');
 
 const processErrorResponse = ex => {
   if (ex instanceof LambdaError) {
@@ -31,19 +31,17 @@ module.exports.find = async event => {
       message: `Received a new request for search from ${b.from} to ${b.to} with path ${b.path} and regex ${b.regex}`
     }));
 
-    await new AWS.Lambda().invoke({
-      FunctionName: process.env.JOB_CREATION_LAMBDA,
-      InvocationType: 'Event',
-      Payload: JSON.stringify({
-        from: b.from,
-        to: b.to,
-        path: b.path,
-        regex: b.regex,
-        context: {
-          txId: event.requestContext.requestId
-        }
-      })
-    }).promise();
+    const publisher = new BufferedJobPublisher(process.env.JOB_QUEUE);
+
+    await publisher.publish({
+      txId: event.requestContext.requestId,
+      from: b.from,
+      to: b.to,
+      path: b.path,
+      regex: b.regex
+    });
+    await publisher.flush();
+    await publisher.sync();
 
     console.info(JSON.stringify({
       txId: event.requestContext.requestId,

@@ -28,7 +28,10 @@ provider:
 
 # you can define service wide environment variables here
   environment:
-    MAX_IPS_TO_SCAN_PER_INSTANCE: 25600
+    MAX_IPS_TO_SCAN_PER_INSTANCE: 25000
+    MAX_JOBS_TO_CREATE: 10000
+    JOB_QUEUE:
+      Ref: JobQueue
 
 package:
   include:
@@ -40,13 +43,6 @@ package:
     - lib/**
 
 functions:
-  createJobs:
-    handler: jobCreator.createJob
-    timeout: 300
-    environment:
-      JOB_QUEUE: 
-        Ref: JobQueue
-
   jobExecutor:
     handler: jobExecutor.execute
     timeout: 300
@@ -60,10 +56,8 @@ functions:
   find:
     handler: gateway.find
     timeout: 10
-    environment:
-      JOB_CREATION_LAMBDA: "${self:service}-${self:provider.stage}-createJobs"
     events:
-      - http: 
+      - http:
           path: /find
           method: post
           request:

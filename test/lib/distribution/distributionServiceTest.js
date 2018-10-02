@@ -15,7 +15,7 @@ describe('GIVEN distributionService.splitJob()', () => {
   let lastSqsArnUsed;
 
   beforeEach(() => {
-    process.env.MAX_IPS_TO_SCAN_PER_INSTANCE = '1000';
+    process.env.MAX_JOBS_TO_CREATE = '1000';
     process.env.JOB_QUEUE = 'sqsArn';
 
     publish = sinon.stub();

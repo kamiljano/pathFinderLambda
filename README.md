@@ -4,8 +4,6 @@ The work on this project is currently ongoing.
 The next steps to do:
 
 * validate the HTTP request
-* job creator does not finish within the time limit for all IPs and currently
-requires sending several requests to cover the whole thing -> run several in parallel
 * update serverless.yml, so that it's AWS account agnostic... at the moment as a shortcut several ARNs are hardcoded
 * generate a notification once the search is over
 * cover by more tests and publish the test coverage
