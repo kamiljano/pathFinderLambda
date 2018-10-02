@@ -1,9 +1,10 @@
 # Notice
 
-The work on this project is currently ongoing.
+While the project is perfectly usable already, the work on this project is still currently ongoing.
 The next steps to do:
 
 * update serverless.yml, so that it's AWS account agnostic... at the moment as a shortcut several ARNs are hardcoded
+and have to be manually replaced before deployed to any other AWS accounts
 * generate a notification once the search is over
 * cover by more tests and publish the test coverage
 * cache results
