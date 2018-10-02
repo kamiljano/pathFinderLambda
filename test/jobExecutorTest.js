@@ -53,7 +53,7 @@ describe('GIVEN JobExecutor', () => {
       searchService.findPath.returns(Promise.resolve([matchingUrl]));
       await executor.execute(event('/', '0.0.0.0', '0.0.0.0', 'a'));
       searchService.findPath.should.have.been.calledWith('0.0.0.0', '0.0.0.0', '/', 'a');
-      notificationService.notifyAboutMatchingPath.should.have.been.calledWith('0.0.0.0', '0.0.0.0', '/', 'a', matchingUrl);
+      notificationService.notifyAboutMatchingPath.should.have.been.calledWith(transactionId, '0.0.0.0', '0.0.0.0', '/', 'a', matchingUrl);
     });
 
   });

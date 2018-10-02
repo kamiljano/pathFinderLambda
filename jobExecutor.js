@@ -8,7 +8,7 @@ const {IP} = require('./lib/search/ip');
 const notify = (result, q) => {
   const arr = [];
   for (let url of result) {
-    arr.push(notificationService.notifyAboutMatchingPath(q.from, q.to, q.path, q.regex, url));
+    arr.push(notificationService.notifyAboutMatchingPath(q.txId, q.from, q.to, q.path, q.regex, url));
   }
   return Promise.all(arr);
 };
