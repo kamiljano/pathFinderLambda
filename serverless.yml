@@ -16,11 +16,6 @@ provider:
          - Ref: NotificationSNSTopic
     - Effect: "Allow"
       Action:
-      - "lambda:InvokeFunction"
-      Resource:
-        - "arn:aws:lambda:eu-west-1:630201600234:function:pathFinder-dev-createJobs"
-    - Effect: "Allow"
-      Action:
         - "sqs:sendMessageBatch"
       Resource:
         Fn::GetAtt: [ JobQueue, Arn ]
@@ -51,7 +46,8 @@ functions:
     events:
       - sqs:
           batchSize: 1
-          arn: "arn:aws:sqs:eu-west-1:630201600234:dev-http-path-search-jobs" //TODO: remove
+          arn:
+            Fn::GetAtt: [ JobQueue, Arn ]
   find:
     handler: gateway.find
     timeout: 10
