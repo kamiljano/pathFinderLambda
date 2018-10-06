@@ -1,20 +1,19 @@
-# Notice
+# Roadmap
 
-While the project is perfectly usable already, the work on this project is still currently ongoing.
-The next steps to do:
-
-* update serverless.yml, so that it's AWS account agnostic... at the moment as a shortcut several ARNs are hardcoded
-and have to be manually replaced before deployed to any other AWS accounts
-* generate a notification once the search is over
-* cover by more tests and publish the test coverage
-* cache results
+The project is perfectly usable already, but there are more improvements on the roadmap:
+https://github.com/kamiljano/pathFinderLambda/projects/1
 
 [![Build Status](https://travis-ci.org/kamiljano/pathFinderLambda.svg?branch=master)](https://travis-ci.org/kamiljano/pathFinderLambda)
+[![Coverage Status](https://coveralls.io/repos/github/kamiljano/pathFinderLambda/badge.svg?branch=master)](https://coveralls.io/github/kamiljano/pathFinderLambda?branch=master)
 
 # About
 
-An AWS lambda responsible for scanning the entire internet for a specified HTTP path.
-It allows you 
+An AWS lambda responsible for scanning the internet for a specific HTTP resource.
+It allows you to search for a resource with the content 
+matching a specific regular expression under a specific 
+HTTP path within a specific range of IPs
+(that includes the range from 0.0.0.0 - 255.255.255.255 and the scan in such case can take just a few hours
+rather than years, what would be needed if you tried to run a similar operation on your local machine)
 
 # Why?
 
