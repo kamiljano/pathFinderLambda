@@ -24,6 +24,13 @@ provider:
   environment:
     MAX_IPS_TO_SCAN_PER_INSTANCE: 25000
     MAX_JOBS_TO_CREATE: 10000
+    DB_NAME: ${self:custom.dbName}
+    DB_USER: ${self:custom.dbUser}
+    DB_PASSWORD: ${self:custom.dbUser}
+    DB_ADDRESS:
+      Fn::GetAtt: [ WebCache, Endpoint.Address ]
+    DB_PORT:
+      Fn::GetAtt: [ WebCache, Endpoint.Port ]
     JOB_QUEUE:
       Ref: JobQueue
 
@@ -33,13 +40,26 @@ package:
     - package-lock.json
     - jobExecutor.js
     - gateway.js
+    - dbInit.js
     - lib/**
+
+custom:
+  dbName: ${opt:dbname, 'pathfinder'}
+  dbUser: ${opt:dbuser, 'root'}
+  dbPassword: ${opt:dbpassword, 'SecretRootPassword'}
+  dbPublic: ${opt:dbpublic, 'true'}
 
 functions:
   jobExecutor:
     handler: jobExecutor.execute
     memorySize: 192
     timeout: 300
+    vpc:
+      securityGroupIds:
+        - Ref: VpcSecurityGroup
+      subnetIds:
+        - Ref: SubnetA
+        - Ref: SubnetB
     environment:
       NOTIFICATION_SNS_TOPIC:
         Ref: NotificationSNSTopic
@@ -52,6 +72,12 @@ functions:
     handler: gateway.find
     timeout: 10
     memorySize: 128
+    vpc:
+      securityGroupIds:
+        - Ref: VpcSecurityGroup
+      subnetIds:
+        - Ref: SubnetA
+        - Ref: SubnetB
     events:
       - http:
           path: /find
@@ -93,6 +119,65 @@ resources:
             Resource: "*"
         Queues:
           - Ref: JobQueue
+
+    WebCache:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBName: ${self:custom.dbName}
+        DBInstanceIdentifier: pathfinder2-${self:provider.stage}
+        AllocatedStorage: '5'
+        DBInstanceClass: db.t2.medium
+        Engine: MySQL
+        MasterUsername: ${self:custom.dbUser}
+        MasterUserPassword: ${self:custom.dbPassword}
+        PubliclyAccessible: ${self:custom.dbPublic}
+        MultiAZ: true
+        Port: 3306
+        DBSubnetGroupName:
+          Ref:
+            DbSubnetGroup
+        VPCSecurityGroups:
+          - Ref:
+              VpcSecurityGroup
+      DeletionPolicy: Delete
+
+    DbSubnetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupDescription: "Subnet group for database access"
+        SubnetIds:
+          - Ref:
+              SubnetA
+          - Ref:
+              SubnetB
+
+    SubnetA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        CidrBlock: 10.0.4.0/24
+        AvailabilityZone: ${self:provider.region}a
+        VpcId:
+          Ref: BackendVpc
+
+    SubnetB:
+      Type: AWS::EC2::Subnet
+      Properties:
+        CidrBlock: 10.0.3.0/24
+        AvailabilityZone: ${self:provider.region}b
+        VpcId:
+          Ref: BackendVpc
+
+    BackendVpc:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.0.0.0/16
+
+    VpcSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: "Security group for RDS DB Instance."
+        VpcId:
+          Ref: BackendVpc
   Outputs:
     NotificationSNSTopic:
       Description: "SNS topic that the events will be published to, once a matching response is found"
@@ -102,3 +187,15 @@ resources:
       Description: "SQS queue that contains all the search jobs to be done"
       Value:
         Ref: JobQueue
+    DatabaseId:
+      Description: "Database ID"
+      Value:
+        Ref: WebCache
+    DatabaseHost:
+      Description: "Database Host"
+      Value:
+        Fn::GetAtt: [ WebCache, Endpoint.Address ]
+    DatabasePort:
+      Description: "Database port"
+      Value:
+        Fn::GetAtt: [ WebCache, Endpoint.Port ]

@@ -9,7 +9,7 @@ const BODY_SCHEMA = Joi.object().keys({
   from: Joi.string().regex(IP_REGEX).required(),
   to: Joi.string().regex(IP_REGEX).required(),
   regex: Joi.string().max(100),
-  path: Joi.string().regex(/^[\w\-!@#\$\%\^\&\*\.?=\|\,<>\/]+$/).required()
+  path: Joi.string().regex(/^[\w\-!@#\$\%\^\&\*\.?=\|\,<>\/]+$/).max(100).required()
 });
 
 const processErrorResponse = ex => {
