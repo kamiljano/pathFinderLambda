@@ -9,7 +9,11 @@ const BODY_SCHEMA = Joi.object().keys({
   from: Joi.string().regex(IP_REGEX).required(),
   to: Joi.string().regex(IP_REGEX).required(),
   regex: Joi.string().max(100),
-  path: Joi.string().regex(/^[\w\-!@#\$\%\^\&\*\.?=\|\,<>\/]+$/).required()
+  path: Joi.string().regex(/^[\w\-!@#\$\%\^\&\*\.?=\|\,<>\/]+$/).max(100).required(),
+  meta: Joi.array().items(Joi.object().keys({
+    key: Joi.string().required(),
+    value: Joi.string().required()
+  }))
 });
 
 const processErrorResponse = ex => {
@@ -66,7 +70,8 @@ module.exports.find = async event => {
       from: b.from,
       to: b.to,
       path: b.path,
-      regex: b.regex
+      regex: b.regex,
+      meta: b.meta && b.meta.length ? b.meta : []
     });
     await publisher.flush();
     await publisher.sync();

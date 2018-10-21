@@ -45,12 +45,32 @@ describe('GIVEN distributionService.splitJob()', () => {
       from: '0.0.0.100',
       to: '0.0.0.100',
       path: '/',
-      regex: 'abc'
+      regex: 'abc',
+      meta: undefined
     });
 
     flush.should.have.been.calledOnce;
     sync.should.have.been.calledOnce;
     lastSqsArnUsed.should.equal('sqsArn');
+  });
+
+  it('WHEN the request contains the meta data, THEN then the meta data is published along', async () => {
+    const body = {
+      from: '0.0.0.0',
+      to: '0.0.0.100',
+      path: '/',
+      regex: 'abc',
+      meta: [{test: 'test'}]
+    };
+    await service.splitJob('txId', body);
+    publish.should.have.been.calledOnceWith({
+      txId: 'txId',
+      from: '0.0.0.0',
+      to: '0.0.0.100',
+      path: '/',
+      regex: 'abc',
+      meta: body.meta
+    });
   });
 
   it('WHEN the request is small, THEN only one instance is spawned, with the same parameters as the original one', async () => {
@@ -66,7 +86,8 @@ describe('GIVEN distributionService.splitJob()', () => {
       from: '0.0.0.0',
       to: '0.0.0.100',
       path: '/',
-      regex: 'abc'
+      regex: 'abc',
+      meta: undefined
     });
 
     flush.should.have.been.calledOnce;
@@ -87,14 +108,16 @@ describe('GIVEN distributionService.splitJob()', () => {
       from: '0.0.0.0',
       to: '0.0.3.232',
       path: '/',
-      regex: 'abc'
+      regex: 'abc',
+      meta: undefined
     });
     publish.should.have.been.calledWith({
       txId: 'abcd',
       from: '0.0.3.233',
       to: '0.0.4.100',
       path: '/',
-      regex: 'abc'
+      regex: 'abc',
+      meta: undefined
     });
   });
 
@@ -111,14 +134,16 @@ describe('GIVEN distributionService.splitJob()', () => {
       from: '0.0.0.0',
       to: '0.0.3.232',
       path: '/',
-      regex: 'abc'
+      regex: 'abc',
+      meta: undefined
     });
     publish.should.have.been.calledWith({
       txId: 'txId',
       from: '0.0.3.233',
       to: '0.0.7.209',
       path: '/',
-      regex: 'abc'
+      regex: 'abc',
+      meta: undefined
     });
   });
 });

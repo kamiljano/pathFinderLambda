@@ -70,7 +70,7 @@ resources:
     NotificationSNSTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: matching-path-found
+        TopicName: pathFinder-success-${self:provider.stage}
     JobQueue:
       Type: AWS::SQS::Queue
       Properties:

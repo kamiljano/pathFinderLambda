@@ -51,6 +51,18 @@ That multiplied by the required memory can result in several hundreds of USD per
 serverless deploy -v
 ```
 
+## Testing
+
+The lambda is largely covered by unit tests written with Mocha+Chai+Sinon.
+In order to run the tests, execute
+
+```commandline
+npm run test
+```
+
+Additionally the repository is configured to run the tests automatically upon every commit
+using Travis-CI.
+
 # HTTP Requests
 
 The whole process is triggered by an HTTP request with a JSON body.
@@ -62,6 +74,11 @@ then the path will be `/test`
 * regex - optional parameter. Validates that the returned body actually contains what it is expected to contain.
 Useful for cases when you want to filter out the fallback pages (like default 404 pages that are still correctly returned event though
 the path as such does not match any resource)
+* meta - optional parameter - an array of arbitrary key-value objects that
+allows you to specify attributes that will be published along with the SNS event
+
+# HTTP Responses
+
 * x-amzn-RequestId - a response header uniquely identifying the transaction within which this 
 whole request is going to be processed
 
@@ -75,6 +92,7 @@ whole request is going to be processed
     >   "to": "255.255.255.255",
     >   "path": "/.git/HEAD",
     >   "regex": "refs/"
+    >   "meta": [{"key": "found", "value": "repo"}]
     > }
     
     < 202 ACCEPTED

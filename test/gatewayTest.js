@@ -34,6 +34,17 @@ describe('GIVEN the REST API Gateway', () => {
     body: JSON.stringify({from, to, path, regex})
   });
 
+  const eventWithSns = (from, to, path, sns) => ({
+    requestContext: {
+      requestId: txId
+    },
+    body: JSON.stringify({from, to, path, meta: [{
+        key: sns.key,
+        value: sns.value
+      }]
+    })
+  });
+
   it('WHEN the request is valid AND does not contain the regex, THEN the job is successfully created', async () => {
     const result = await gateway.find(event('0.0.0.0', '0.0.0.0', '/'));
     bufferedJobPublisher.publish.should.have.been.calledWith({
@@ -41,7 +52,8 @@ describe('GIVEN the REST API Gateway', () => {
       from: '0.0.0.0',
       to: '0.0.0.0',
       path: '/',
-      regex: undefined
+      regex: undefined,
+      meta: []
     });
     bufferedJobPublisher.flush.should.have.been.called;
     bufferedJobPublisher.sync.should.have.been.called;
@@ -55,7 +67,31 @@ describe('GIVEN the REST API Gateway', () => {
       from: '0.0.0.0',
       to: '0.0.0.0',
       path: '/',
-      regex: 'reg'
+      regex: 'reg',
+      meta: []
+    });
+    bufferedJobPublisher.flush.should.have.been.called;
+    bufferedJobPublisher.sync.should.have.been.called;
+    result.statusCode.should.equal(202);
+  });
+
+  it('WHEN the request is valid AND contains sns attributes, THEN the job is successfully created', async () => {
+    const result = await gateway.find(eventWithSns('0.0.0.0', '0.0.0.0', '/', {
+      key: 'testKey',
+      value: 'testValue'
+    }));
+    bufferedJobPublisher.publish.should.have.been.calledWith({
+      txId,
+      from: '0.0.0.0',
+      to: '0.0.0.0',
+      path: '/',
+      regex: undefined,
+      meta: [
+        {
+          key: 'testKey',
+          value: 'testValue'
+        }
+      ]
     });
     bufferedJobPublisher.flush.should.have.been.called;
     bufferedJobPublisher.sync.should.have.been.called;
